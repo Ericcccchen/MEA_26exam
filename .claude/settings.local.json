@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(awk:*)",
+      "Bash(/Users/shenjingyi/anaconda3/envs/python_pytorch2/bin/python train5_2.py)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(python3:*)",
+      "Bash(pip install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

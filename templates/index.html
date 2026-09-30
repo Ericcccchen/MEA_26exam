@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EmotionAI — Tool</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: #000;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px 48px;
+    }
+
+    /* ── 顶部导航 ── */
+    .site-header {
+      width: 100%;
+      max-width: 880px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 18px;
+      border-bottom: 1px solid #fff;
+      margin-bottom: 40px;
+    }
+
+    .site-logo {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .site-nav a {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #aaa;
+      text-decoration: none;
+      transition: color .15s;
+    }
+
+    .site-nav a:hover { color: #fff; }
+    .site-nav a.active { color: #fff; }
+
+    /* 语言切换 */
+    .lang-toggle {
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 2px;
+      background: transparent;
+      border: 1px solid #444;
+      color: #aaa;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+      white-space: nowrap;
+    }
+
+    .lang-toggle:hover { border-color: #fff; color: #fff; }
+
+    .user-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-user {
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid #444;
+      color: #888;
+      padding: 6px 14px;
+      cursor: not-allowed;
+      position: relative;
+    }
+
+    .btn-user::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      background: #111;
+      border: 1px solid #333;
+      color: #888;
+      padding: 3px 8px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s;
+    }
+
+    .btn-user:hover::after { opacity: 1; }
+
+    /* ── Page title ── */
+    h1 {
+      font-size: 13px;
+      color: #fff;
+      margin-bottom: 40px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      font-weight: 400;
+      border-bottom: 1px solid #333;
+      padding-bottom: 16px;
+      width: 100%;
+      max-width: 880px;
+    }
+
+    .container {
+      display: flex;
+      gap: 1px;
+      width: 100%;
+      max-width: 880px;
+      align-items: flex-start;
+      border: 1px solid #fff;
+    }
+
+    /* ── 上传区 ── */
+    .upload-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #fff;
+    }
+
+    .drop-zone {
+      border: none;
+      background: #000;
+      padding: 48px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: background .15s;
+      position: relative;
+      border-bottom: 1px solid #333;
+    }
+
+    .drop-zone.hover { background: #111; }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .drop-icon { font-size: 32px; margin-bottom: 14px; filter: grayscale(1); }
+
+    .drop-text { color: #aaa; font-size: 11px; line-height: 2; letter-spacing: 2px; text-transform: uppercase; }
+    .drop-text span { color: #fff; font-weight: 600; }
+    .drop-text .fmt { color: #777; }
+
+    /* 预览图 */
+    .preview-wrap {
+      overflow: hidden;
+      background: #000;
+      display: none;
+      position: relative;
+      border-top: 1px solid #333;
+    }
+
+    .preview-wrap img {
+      width: 100%;
+      display: block;
+      max-height: 280px;
+      object-fit: contain;
+      background: #0a0a0a;
+    }
+
+    .preview-name {
+      padding: 10px 16px;
+      font-size: 10px;
+      color: #888;
+      border-top: 1px solid #222;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── 结果区 ── */
+    .result-panel {
+      flex: 1;
+      background: #000;
+      padding: 28px 24px;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .result-title {
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 24px;
+      font-weight: 400;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #2a2a2a;
+      padding-bottom: 12px;
+    }
+
+    .placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      font-size: 10px;
+      gap: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .placeholder-icon { font-size: 28px; filter: grayscale(1) opacity(0.4); }
+
+    /* 结果列表 */
+    .emotion-list { display: flex; flex-direction: column; gap: 0; }
+
+    .emotion-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px 0;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .emotion-row:last-child { border-bottom: none; }
+
+    .emotion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .emotion-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-weight: 400;
+      color: #fff;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .emotion-name > span:first-child { filter: grayscale(1); font-size: 14px; }
+
+    .emotion-prob {
+      font-size: 11px;
+      color: #aaa;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+
+    .bar-bg {
+      height: 1px;
+      background: #2a2a2a;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: #fff;
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* 加载动画 */
+    .spinner {
+      display: none;
+      width: 24px; height: 24px;
+      border: 1px solid #333;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading .spinner { display: block; }
+    .loading .placeholder-icon { display: none; }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="/" class="site-logo">EmotionAI</a>
+  <nav class="site-nav">
+    <a href="/" data-zh="首页" data-en="Home">首页</a>
+    <a href="/tool" class="active" data-zh="识别工具" data-en="Tool">识别工具</a>
+    <button class="lang-toggle" id="langBtn" onclick="toggleLang()">EN</button>
+  </nav>
+  <div class="user-area">
+    <button class="btn-user" data-zh="登录" data-en="Login" data-tip="即将推出">登录</button>
+    <button class="btn-user" data-zh="注册" data-en="Register" data-tip="即将推出">注册</button>
+  </div>
+</header>
+
+<h1 id="pageTitle">EMOTION RECOGNITION &nbsp;/&nbsp; 情绪识别</h1>
+
+<div class="container">
+
+  <!-- 左：上传 -->
+  <div class="upload-panel">
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="drop-icon">[ + ]</div>
+      <div class="drop-text" id="dropText">
+        <span id="dropPrompt">拖入图片或</span> <span id="dropClick">点击选择</span><br>
+        <span class="fmt">JPG / PNG / WEBP</span>
+      </div>
+    </div>
+
+    <div class="preview-wrap" id="previewWrap">
+      <img id="previewImg" src="" alt="preview">
+      <div class="preview-name" id="previewName"></div>
+    </div>
+  </div>
+
+  <!-- 右：结果 -->
+  <div class="result-panel">
+    <div class="result-title" id="resultTitle">识别结果</div>
+
+    <div class="placeholder" id="placeholder">
+      <div class="placeholder-icon">—</div>
+      <div id="placeholderText">上传人脸图片以开始识别</div>
+    </div>
+
+    <div class="emotion-list" id="emotionList" style="display:none;"></div>
+  </div>
+
+</div>
+
+<script>
+  /* ── i18n ── */
+  const LANG_KEY = 'emotionai_lang';
+
+  const T = {
+    zh: {
+      pageTitle:      'EMOTION RECOGNITION &nbsp;/&nbsp; 情绪识别',
+      dropPrompt:     '拖入图片或',
+      dropClick:      '点击选择',
+      resultTitle:    '识别结果',
+      placeholder:    '上传人脸图片以开始识别',
+      analyzing:      'ANALYZING...',
+      errPrefix:      '请求失败: ',
+      loginTip:       '即将推出',
+    },
+    en: {
+      pageTitle:      'EMOTION RECOGNITION',
+      dropPrompt:     'Drop image or',
+      dropClick:      'click to select',
+      resultTitle:    'Results',
+      placeholder:    'Upload a face image to start',
+      analyzing:      'ANALYZING...',
+      errPrefix:      'Request failed: ',
+      loginTip:       'Coming Soon',
+    }
+  };
+
+  let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
+
+  function applyLang(lang) {
+    currentLang = lang;
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+
+    const t = T[lang];
+    document.getElementById('pageTitle').innerHTML    = t.pageTitle;
+    document.getElementById('dropPrompt').textContent = t.dropPrompt;
+    document.getElementById('dropClick').textContent  = t.dropClick;
+    document.getElementById('resultTitle').textContent = t.resultTitle;
+    document.getElementById('placeholderText').textContent = t.placeholder;
+
+    // nav links
+    document.querySelectorAll('.site-nav a[data-zh]').forEach(el => {
+      el.textContent = lang === 'zh' ? el.dataset.zh : el.dataset.en;
+    });
+
+    // user buttons
+    document.querySelectorAll('.btn-user[data-zh]').forEach(el => {
+      el.textContent = lang === 'zh' ? el.dataset.zh : el.dataset.en;
+      el.dataset.tip = t.loginTip;
+    });
+  }
+
+  function toggleLang() {
+    const next = currentLang === 'zh' ? 'en' : 'zh';
+    localStorage.setItem(LANG_KEY, next);
+    applyLang(next);
+  }
+
+  // 初始化语言
+  if (currentLang === 'en') applyLang('en');
+
+  /* ── 上传 & 预测 ── */
+  const dropZone    = document.getElementById('dropZone');
+  const fileInput   = document.getElementById('fileInput');
+  const previewWrap = document.getElementById('previewWrap');
+  const previewImg  = document.getElementById('previewImg');
+  const previewName = document.getElementById('previewName');
+  const placeholder = document.getElementById('placeholder');
+  const emotionList = document.getElementById('emotionList');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('hover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('hover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      previewImg.src = e.target.result;
+      previewWrap.style.display = 'block';
+      previewName.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+
+    showLoading();
+    const fd = new FormData();
+    fd.append('file', file);
+
+    fetch('/predict', { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { showError(data.error); return; }
+        showResults(data.results);
+      })
+      .catch(err => showError(T[currentLang].errPrefix + err));
+  }
+
+  function showLoading() {
+    placeholder.style.display = 'flex';
+    placeholder.classList.add('loading');
+    placeholder.querySelector('.placeholder-icon').textContent = '';
+    placeholder.querySelector('#placeholderText').textContent = T[currentLang].analyzing;
+    if (!placeholder.querySelector('.spinner')) {
+      const s = document.createElement('div');
+      s.className = 'spinner';
+      placeholder.prepend(s);
+    }
+    emotionList.style.display = 'none';
+  }
+
+  function showResults(results) {
+    placeholder.style.display = 'none';
+    emotionList.style.display = 'flex';
+    emotionList.innerHTML = '';
+
+    const isEn = currentLang === 'en';
+    results.forEach((item, idx) => {
+      const row = document.createElement('div');
+      row.className = 'emotion-row';
+      const label = isEn ? item.label : item.label_cn;
+      const sub   = isEn ? '' : `<small style="color:#999;font-weight:400">${item.label}</small>`;
+      row.innerHTML = `
+        <div class="emotion-header">
+          <div class="emotion-name">
+            <span>${item.emoji}</span>
+            <span>${label} ${sub}</span>
+          </div>
+          <div class="emotion-prob">${item.prob}%</div>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill" style="width:0%" data-width="${item.prob}%"></div>
+        </div>`;
+      emotionList.appendChild(row);
+    });
+
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.bar-fill').forEach(el => {
+        el.style.width = el.dataset.width;
+      });
+    });
+  }
+
+  function showError(msg) {
+    placeholder.style.display = 'flex';
+    placeholder.classList.remove('loading');
+    placeholder.innerHTML = `<div style="color:#fff;font-size:10px;letter-spacing:2px;text-transform:uppercase">ERR &nbsp;${msg}</div>`;
+    emotionList.style.display = 'none';
+  }
+</script>
+
+</body>
+</html>

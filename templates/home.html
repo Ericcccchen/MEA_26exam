@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EmotionAI</title>
+  <style>
+    /* ── Global reset: remove default margins/padding, use border-box sizing ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Body: dark background, monospace font, full-height centered column layout ── */
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: #000;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px 80px;
+    }
+
+    /* ── Top navigation bar: logo on left, nav links on right, white bottom border ── */
+    .site-header {
+      width: 100%;
+      max-width: 880px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 18px;
+      border-bottom: 1px solid #fff;
+    }
+
+    /* ── Site logo: small uppercase spaced-out text ── */
+    .site-logo {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ── Nav link container: horizontal flex with gaps ── */
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    /* ── Individual nav links: muted color with hover/active white state ── */
+    .site-nav a {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #aaa;
+      text-decoration: none;
+      transition: color .15s;
+    }
+
+    .site-nav a:hover { color: #fff; }
+    .site-nav a.active { color: #fff; }
+
+    /* ── Language toggle button: transparent button that switches ZH/EN ── */
+    .lang-toggle {
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 2px;
+      background: transparent;
+      border: 1px solid #444;
+      color: #aaa;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+      white-space: nowrap;
+    }
+
+    .lang-toggle:hover { border-color: #fff; color: #fff; }
+
+    /* ── User area: wraps Login and Register buttons side by side ── */
+    .user-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* ── Disabled user buttons (Login/Register): grayed out, not-allowed cursor ── */
+    .btn-user {
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid #444;
+      color: #888;
+      padding: 6px 14px;
+      cursor: not-allowed;
+      position: relative;
+    }
+
+    /* ── Tooltip shown on hover via CSS ::after pseudo-element using data-tip attr ── */
+    .btn-user::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      background: #111;
+      border: 1px solid #333;
+      color: #888;
+      padding: 3px 8px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s;
+    }
+
+    .btn-user:hover::after { opacity: 1; }
+
+    /* ── Hero section: large intro area with tag line, title, description, and CTA ── */
+    .hero {
+      width: 100%;
+      max-width: 880px;
+      padding: 80px 0 60px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    /* ── Small uppercase tag above the hero title ── */
+    .hero-tag {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 28px;
+    }
+
+    /* ── Hero main title: responsive fluid font size ── */
+    .hero-title {
+      font-size: clamp(24px, 5vw, 42px);
+      font-weight: 400;
+      letter-spacing: 2px;
+      line-height: 1.25;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+
+    /* ── Underlined emphasis inside the hero title (no italic style) ── */
+    .hero-title em {
+      font-style: normal;
+      border-bottom: 1px solid #fff;
+    }
+
+    /* ── Hero description paragraph: muted small text ── */
+    .hero-desc {
+      font-size: 12px;
+      color: #aaa;
+      line-height: 2;
+      max-width: 560px;
+      margin-bottom: 40px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Call-to-action button: white filled, links to the tool page ── */
+    .hero-cta {
+      display: inline-block;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #000;
+      background: #fff;
+      border: none;
+      padding: 14px 36px;
+      text-decoration: none;
+      transition: background .15s;
+      cursor: pointer;
+    }
+
+    .hero-cta:hover { background: #ddd; }
+
+    /* ── Generic content section: full-width with bottom border ── */
+    .section {
+      width: 100%;
+      max-width: 880px;
+      padding: 60px 0;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    /* ── Small section label above content grids ── */
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    /* ── Emotion cards grid: 6 equal columns in a bordered box ── */
+    .emotions-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border: 1px solid #2a2a2a;
+    }
+
+    /* ── Single emotion card: centered column with emoji, Chinese name, English name ── */
+    .emotion-card {
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      border-right: 1px solid #2a2a2a;
+      background: #000;
+      transition: background .15s;
+    }
+
+    .emotion-card:last-child { border-right: none; }
+    .emotion-card:hover { background: #0d0d0d; }
+
+    /* ── Emotion card text layers: emoji, primary label, secondary label ── */
+    .emotion-card .emoji { font-size: 22px; filter: grayscale(1); }
+    .emotion-card .name-cn { font-size: 11px; color: #fff; letter-spacing: 2px; }
+    .emotion-card .name-en { font-size: 9px; color: #777; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ── "How It Works" 3-column grid ── */
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid #2a2a2a;
+    }
+
+    /* ── Individual step card inside the how-it-works grid ── */
+    .how-card {
+      padding: 32px 24px;
+      border-right: 1px solid #2a2a2a;
+      background: #000;
+    }
+
+    .how-card:last-child { border-right: none; }
+
+    /* ── Step number label (e.g., "Step 01") ── */
+    .how-step {
+      font-size: 9px;
+      color: #666;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    /* ── Step title and description text ── */
+    .how-title {
+      font-size: 12px;
+      color: #fff;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      font-weight: 400;
+    }
+
+    .how-desc {
+      font-size: 10px;
+      color: #aaa;
+      line-height: 2;
+      letter-spacing: 1px;
+    }
+
+    /* ── User management placeholder section (features coming soon) ── */
+    .user-mgmt-section {
+      width: 100%;
+      max-width: 880px;
+      padding: 60px 0;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    /* ── Dashed banner indicating upcoming features ── */
+    .coming-soon-banner {
+      border: 1px dashed #2a2a2a;
+      padding: 48px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+    }
+
+    /* ── "Coming Soon" badge pill ── */
+    .coming-soon-banner .badge {
+      font-size: 9px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #777;
+      border: 1px solid #333;
+      padding: 4px 12px;
+    }
+
+    .coming-soon-banner h2 {
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    .coming-soon-banner p {
+      font-size: 11px;
+      color: #888;
+      letter-spacing: 1px;
+      line-height: 2;
+      max-width: 480px;
+    }
+
+    /* ── Tag pills listing planned features ── */
+    .feature-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .feature-tag {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #777;
+      border: 1px solid #2a2a2a;
+      padding: 4px 10px;
+    }
+
+    /* ── Footer: copyright on left, tech stack on right ── */
+    footer {
+      width: 100%;
+      max-width: 880px;
+      padding: 32px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer span {
+      font-size: 10px;
+      color: #666;
+      letter-spacing: 2px;
+    }
+
+    /* ── Responsive overrides for small screens (≤640px) ── */
+    @media (max-width: 640px) {
+      .emotions-grid { grid-template-columns: repeat(3, 1fr); }
+      .how-grid { grid-template-columns: 1fr; }
+      .emotion-card { border-right: none; border-bottom: 1px solid #2a2a2a; }
+      footer { flex-direction: column; gap: 12px; align-items: flex-start; }
+      .site-nav { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top navigation: logo, nav links, language toggle, disabled user buttons ── -->
+<header class="site-header">
+  <a href="/" class="site-logo">EmotionAI</a>
+  <nav class="site-nav">
+    <a href="/" class="active" data-zh="首页" data-en="Home">首页</a>
+    <a href="/tool" data-zh="识别工具" data-en="Tool">识别工具</a>
+    <button class="lang-toggle" id="langBtn" onclick="toggleLang()">EN</button>
+  </nav>
+  <div class="user-area">
+    <button class="btn-user" data-zh="登录" data-en="Login" data-tip="即将推出">登录</button>
+    <button class="btn-user" data-zh="注册" data-en="Register" data-tip="即将推出">注册</button>
+  </div>
+</header>
+
+<!-- ── Hero: project tag line, main title with underlined emphasis, description, and CTA button ── -->
+<section class="hero">
+  <div class="hero-tag i18n"
+       data-zh="深度学习 &nbsp;/&nbsp; 计算机视觉 &nbsp;/&nbsp; 情绪分析"
+       data-en="Deep Learning &nbsp;/&nbsp; Computer Vision &nbsp;/&nbsp; Emotion Analysis">
+    深度学习 &nbsp;/&nbsp; 计算机视觉 &nbsp;/&nbsp; 情绪分析
+  </div>
+  <h1 class="hero-title">
+    <span class="i18n"
+          data-zh="基于 ResNet 的<br><em>人脸情绪识别</em> 系统"
+          data-en="ResNet-Based<br><em>Facial Emotion Recognition</em>">
+      基于 ResNet 的<br><em>人脸情绪识别</em> 系统
+    </span>
+  </h1>
+  <p class="hero-desc i18n"
+     data-zh="上传一张人脸图片，系统将通过训练好的深度卷积神经网络，实时分析并输出六种情绪的置信度分布。模型基于 ResNet-18 骨干网络，在 FER 数据集上微调训练。"
+     data-en="Upload a face image and our deep convolutional neural network will analyze it in real time, returning a confidence distribution across six emotion classes. The model uses a ResNet-18 backbone fine-tuned on the FER dataset.">
+    上传一张人脸图片，系统将通过训练好的深度卷积神经网络，实时分析并输出六种情绪的置信度分布。模型基于 ResNet-18 骨干网络，在 FER 数据集上微调训练。
+  </p>
+  <a href="/tool" class="hero-cta i18n" data-zh="开始识别 &rarr;" data-en="Start Now &rarr;">开始识别 &rarr;</a>
+</section>
+
+<!-- ── Emotion classes section: 6-column grid showing each recognizable emotion ── -->
+<section class="section">
+  <div class="section-label i18n"
+       data-zh="可识别的情绪类别 &nbsp;&mdash;&nbsp; 6 Classes"
+       data-en="Recognizable Emotion Classes &nbsp;&mdash;&nbsp; 6 Categories">
+    可识别的情绪类别 &nbsp;&mdash;&nbsp; 6 Classes
+  </div>
+  <div class="emotions-grid">
+    <!-- Each card shows emoji, primary language label, and English label -->
+    <div class="emotion-card">
+      <span class="emoji">😒</span>
+      <span class="name-cn i18n" data-zh="厌恶" data-en="Disgust">厌恶</span>
+      <span class="name-en">disgust</span>
+    </div>
+    <div class="emotion-card">
+      <span class="emoji">😨</span>
+      <span class="name-cn i18n" data-zh="害怕" data-en="Fear">害怕</span>
+      <span class="name-en">fear</span>
+    </div>
+    <div class="emotion-card">
+      <span class="emoji">😄</span>
+      <span class="name-cn i18n" data-zh="开心" data-en="Happy">开心</span>
+      <span class="name-en">happy</span>
+    </div>
+    <div class="emotion-card">
+      <span class="emoji">😐</span>
+      <span class="name-cn i18n" data-zh="平静" data-en="Neutral">平静</span>
+      <span class="name-en">neutral</span>
+    </div>
+    <div class="emotion-card">
+      <span class="emoji">😢</span>
+      <span class="name-cn i18n" data-zh="悲伤" data-en="Sad">悲伤</span>
+      <span class="name-en">sad</span>
+    </div>
+    <div class="emotion-card">
+      <span class="emoji">😲</span>
+      <span class="name-cn i18n" data-zh="惊讶" data-en="Surprise">惊讶</span>
+      <span class="name-en">surprise</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── How It Works section: 3-step explanation of the inference pipeline ── -->
+<section class="section">
+  <div class="section-label i18n"
+       data-zh="工作原理 &nbsp;&mdash;&nbsp; How It Works"
+       data-en="How It Works">
+    工作原理 &nbsp;&mdash;&nbsp; How It Works
+  </div>
+  <div class="how-grid">
+    <!-- Step 1: image upload and preprocessing -->
+    <div class="how-card">
+      <div class="how-step">Step 01</div>
+      <div class="how-title i18n" data-zh="图像输入" data-en="Image Input">图像输入</div>
+      <div class="how-desc i18n"
+           data-zh="上传 JPG、PNG 或 WEBP 格式的人脸图片。系统自动缩放并裁剪至 48×48 像素，进行标准化预处理以匹配模型输入规格。"
+           data-en="Upload a JPG, PNG, or WEBP face image. The system auto-resizes and center-crops to 48×48 px, then applies standard normalization to match model input specs.">
+        上传 JPG、PNG 或 WEBP 格式的人脸图片。系统自动缩放并裁剪至 48×48 像素，进行标准化预处理以匹配模型输入规格。
+      </div>
+    </div>
+    <!-- Step 2: ResNet feature extraction and softmax output -->
+    <div class="how-card">
+      <div class="how-step">Step 02</div>
+      <div class="how-title i18n" data-zh="神经网络推理" data-en="Neural Net Inference">神经网络推理</div>
+      <div class="how-desc i18n"
+           data-zh="图像经过 ResNet-18 卷积骨干提取深层特征，再通过全连接分类头输出 6 维 logits，最终经 Softmax 转换为概率分布。"
+           data-en="The image passes through a ResNet-18 convolutional backbone for feature extraction, then a fully-connected head outputs 6-dimensional logits, converted to probabilities via Softmax.">
+        图像经过 ResNet-18 卷积骨干提取深层特征，再通过全连接分类头输出 6 维 logits，最终经 Softmax 转换为概率分布。
+      </div>
+    </div>
+    <!-- Step 3: ranked probability results returned to user -->
+    <div class="how-card">
+      <div class="how-step">Step 03</div>
+      <div class="how-title i18n" data-zh="结果输出" data-en="Result Output">结果输出</div>
+      <div class="how-desc i18n"
+           data-zh="返回六种情绪的置信度百分比，按概率由高到低排列，直观展示模型对当前表情的判断结果。"
+           data-en="Returns confidence percentages for all six emotions, ranked from highest to lowest, giving an intuitive view of the model's prediction.">
+        返回六种情绪的置信度百分比，按概率由高到低排列，直观展示模型对当前表情的判断结果。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── User management section: placeholder with "Coming Soon" banner and feature tags ── -->
+<section class="user-mgmt-section">
+  <div class="section-label i18n"
+       data-zh="用户系统 &nbsp;&mdash;&nbsp; User Management"
+       data-en="User Management">
+    用户系统 &nbsp;&mdash;&nbsp; User Management
+  </div>
+  <div class="coming-soon-banner">
+    <span class="badge i18n" data-zh="即将推出" data-en="Coming Soon">即将推出</span>
+    <h2 class="i18n" data-zh="用户账户系统" data-en="User Account System">用户账户系统</h2>
+    <p class="i18n"
+       data-zh="用户注册与登录、个人识别历史记录、批量图片分析、API 密钥管理等功能正在开发中。"
+       data-en="User registration & login, personal recognition history, batch image analysis, and API key management are under development.">
+      用户注册与登录、个人识别历史记录、批量图片分析、API 密钥管理等功能正在开发中。
+    </p>
+    <!-- Planned feature tags -->
+    <div class="feature-tags">
+      <span class="feature-tag i18n" data-zh="用户注册 / 登录" data-en="Register / Login">用户注册 / 登录</span>
+      <span class="feature-tag i18n" data-zh="历史记录" data-en="History">历史记录</span>
+      <span class="feature-tag i18n" data-zh="批量分析" data-en="Batch Analysis">批量分析</span>
+      <span class="feature-tag i18n" data-zh="API 访问" data-en="API Access">API 访问</span>
+      <span class="feature-tag i18n" data-zh="数据统计" data-en="Analytics">数据统计</span>
+      <span class="feature-tag i18n" data-zh="权限管理" data-en="Permissions">权限管理</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer: copyright and tech stack info ── -->
+<footer>
+  <span>&copy; 2026 EmotionAI</span>
+  <span>PyTorch &nbsp;/&nbsp; ResNet-18 &nbsp;/&nbsp; Flask</span>
+</footer>
+
+<script>
+  /* ── Persist the chosen language in localStorage ── */
+  const LANG_KEY = 'emotionai_lang';
+
+  /* ── applyLang: swap all .i18n elements, nav links, and button text to the given language ── */
+  function applyLang(lang) {
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+
+    /* Update every element with class .i18n using its data-zh or data-en attribute */
+    document.querySelectorAll('.i18n').forEach(el => {
+      const text = el.dataset[lang];
+      if (text !== undefined) el.innerHTML = text;
+    });
+
+    /* Update nav link text (they carry data-zh / data-en but not the .i18n class) */
+    document.querySelectorAll('.site-nav a[data-zh]').forEach(el => {
+      el.textContent = lang === 'zh' ? el.dataset.zh : el.dataset.en;
+    });
+
+    /* Update disabled user buttons and their tooltip text */
+    document.querySelectorAll('.btn-user[data-zh]').forEach(el => {
+      el.textContent = lang === 'zh' ? el.dataset.zh : el.dataset.en;
+      el.dataset.tip = lang === 'zh' ? '即将推出' : 'Coming Soon';
+    });
+  }
+
+  /* ── toggleLang: flip between ZH and EN and persist the choice ── */
+  function toggleLang() {
+    const current = localStorage.getItem(LANG_KEY) || 'zh';
+    const next = current === 'zh' ? 'en' : 'zh';
+    localStorage.setItem(LANG_KEY, next);
+    applyLang(next);
+  }
+
+  /* ── On page load: restore previously saved language preference ── */
+  (function() {
+    const saved = localStorage.getItem(LANG_KEY) || 'zh';
+    if (saved === 'en') applyLang('en');
+  })();
+</script>
+</body>
+</html>
